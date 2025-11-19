@@ -13,6 +13,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import org.thatdev.arduinobuddy.ui.theme.ArduinoBuddyTheme
 import arduinobuddycli.Arduinobuddycli
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -21,6 +23,10 @@ class MainActivity : ComponentActivity() {
 
         // Initialize JNI
         Arduinobuddycli.touch()
+
+        // Initialize Arduinobuddycli
+        val dataDir = filesDir.absolutePath
+        Arduinobuddycli.init(dataDir)
 
         setContent {
             ArduinoBuddyTheme {
@@ -38,12 +44,12 @@ fun BoardListScreen(modifier: Modifier = Modifier) {
 
     // Run the CLI command once when this composable is first launched
     LaunchedEffect(Unit) {
-        try {
-            // Assuming your Go binding exposes this static method
-            val output = Arduinobuddycli.runSimple("board,list")
-            boardList = output
-        } catch (e: Exception) {
-            boardList = "Error: ${e.message}"
+        boardList = withContext(Dispatchers.IO) {
+            try {
+                Arduinobuddycli.boardList()
+            } catch (e: Exception) {
+                "Error: ${e.message}"
+            }
         }
     }
 
