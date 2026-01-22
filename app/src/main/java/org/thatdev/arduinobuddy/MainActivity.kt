@@ -1,15 +1,19 @@
 package org.thatdev.arduinobuddy
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Button
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import org.thatdev.arduinobuddy.ui.theme.ArduinoBuddyTheme
 import arduinobuddycli.Arduinobuddycli
@@ -53,10 +57,23 @@ fun BoardListScreen(modifier: Modifier = Modifier) {
         }
     }
 
-    Text(
-        text = boardList,
-        modifier = modifier
-    )
+    val context = LocalContext.current
+
+    Column() {
+        Text(
+            text = boardList,
+            modifier = modifier
+        )
+
+
+        Button(onClick = {
+            context.startActivity(
+                Intent(context, SerialTestActivity::class.java)
+            )
+        }) {
+            Text("Open Serial Test")
+        }
+    }
 }
 
 @Preview(showBackground = true)
