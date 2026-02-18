@@ -4,14 +4,13 @@ import android.hardware.usb.*;
 import android.content.Context;
 
 import com.hoho.android.usbserial.driver.*;
-import com.hoho.android.usbserial.util.SerialInputOutputManager;
 
 import java.io.IOException;
 import java.util.*;
 
 public class SerialBridge {
 
-    private UsbManager usbManager;
+    private final UsbManager usbManager;
     private UsbSerialPort port;
     private UsbDeviceConnection connection;
 

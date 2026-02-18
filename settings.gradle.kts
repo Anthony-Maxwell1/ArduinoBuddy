@@ -17,6 +17,15 @@ pluginManagement {
     }
 }
 
+dependencyResolutionManagement {
+    repositories {
+        google()
+        mavenCentral()
+        maven("https://jitpack.io")
+    }
+}
+
+
 rootProject.name = "ArduinoBuddy"
 include(":app")
 
