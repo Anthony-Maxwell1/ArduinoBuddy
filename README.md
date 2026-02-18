@@ -4,6 +4,7 @@
 Related repository:
 - [Arduino CLI fork](https://github.com/Anthony-Maxwell1/arduino-cli_arduinobuddyfork), ported to run on android with this application providing a native interface.
 - [esptool fork](https://github.com/Anthony-Maxwell1/esptool-arduinobuddy_fork), ported to run on android with this application providing a native interface.
+- [arduino-esp32 (esp32 core) fork](https://github.com/Anthony-Maxwell1/arduino-esp32-arduinobuddyfork), portING to android to run with ArduinoBuddy providing a native interface.
 
 ### Why port arduino-cli? Wouldn't it have been simpler to make it in kotlin?
 The arduino-cli provides compatibility to many different boards. Older applications in the past made to code arduino on android have made the mistake of not using it, and therefore each board has to be developed manually and hardcoded, and so has a very limited range. Said application was also closed-source and went obsolete quickly as it was not updated to newer android versions.
