@@ -59,7 +59,7 @@ fun BoardListScreen(modifier: Modifier = Modifier) {
 
     val context = LocalContext.current
 
-    Column() {
+    Column {
         Text(
             text = boardList,
             modifier = modifier

@@ -41,11 +41,13 @@ class SerialTestActivity : ComponentActivity() {
     private var serialPort: UsbSerialPort? = null
 
     private val usbReceiver = object : BroadcastReceiver() {
+        @RequiresApi(Build.VERSION_CODES.TIRAMISU)
         override fun onReceive(context: Context, intent: Intent) {
             when (intent.action) {
                 ACTION_USB_PERMISSION -> {
                     val device: UsbDevice? =
-                        intent.getParcelableExtra(UsbManager.EXTRA_DEVICE)
+                        intent.getParcelableExtra(UsbManager.EXTRA_DEVICE, UsbDevice::class.java)
+
                     if (intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false)) {
                         device?.let { openDevice(it) }
                     } else {
@@ -55,14 +57,14 @@ class SerialTestActivity : ComponentActivity() {
 
                 UsbManager.ACTION_USB_DEVICE_DETACHED -> {
                     val device: UsbDevice? =
-                        intent.getParcelableExtra(UsbManager.EXTRA_DEVICE)
+                        intent.getParcelableExtra(UsbManager.EXTRA_DEVICE, UsbDevice::class.java)
                     device?.let { closeDevice() }
                 }
             }
         }
     }
 
-    @RequiresApi(Build.VERSION_CODES.O)
+    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -168,17 +170,17 @@ class SerialTestActivity : ComponentActivity() {
         }
     }
 
-    fun sendData(data: String) {
-        serialPort?.let { port ->
-            thread(start = true) {
-                try {
-                    port.write(data.toByteArray(), 1000)
-                } catch (e: IOException) {
-                    Log.e(TAG, "Serial write error: ${e.message}")
-                }
-            }
-        }
-    }
+//    fun sendData(data: String) {
+//        serialPort?.let { port ->
+//            thread(start = true) {
+//                try {
+//                    port.write(data.toByteArray(), 1000)
+//                } catch (e: IOException) {
+//                    Log.e(TAG, "Serial write error: ${e.message}")
+//                }
+//            }
+//        }
+//    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

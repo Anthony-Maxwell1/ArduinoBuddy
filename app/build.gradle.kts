@@ -1,5 +1,9 @@
+import groovy.json.JsonSlurper
 import java.io.File
-import java.net.URL
+import java.net.URI
+import java.util.zip.ZipInputStream
+import kotlin.collections.component1
+import kotlin.collections.component2
 
 plugins {
     alias(libs.plugins.android.application)
@@ -81,64 +85,91 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.test.manifest)
 }
 
+
 // --- CONFIGURATION ---
 val arduinoCliRepo = "Anthony-Maxwell1/arduino-cli_arduinobuddyfork"
 val esptoolRepo = "Anthony-Maxwell1/esptool-arduinobuddy_fork"
 
-// Release tags (change to desired versions)
-val arduinoCliVersion = "v1.0.0"
-val esptoolVersion = "v1.0.0"
+val libsDir = File(rootDir, "app/libs")
+val esptoolTargetDir = File(rootDir, "app/src/main/python/esptool")
+val buildTmpDir = File(rootDir, ".gradle/tooling")
+val hashFile = File(buildTmpDir, "tooling.hash")
 
-// Target folders
-val libsDir = file("$projectDir/libs")
-val esptoolTargetDir = file("$projectDir/src/main/python/esptool")
-
-// --- Helper function to download files if missing ---
+// --- HELPER: download file ---
 fun downloadFile(url: String, output: File) {
-    if (!output.exists()) {
-        println("Downloading $url → ${output.absolutePath}")
-        URL(url).openStream().use { it.copyTo(output.outputStream()) }
-    } else {
-        println("File already exists: ${output.name}")
+    output.parentFile.mkdirs()
+    URI(url).toURL().openStream().use { input ->
+        output.outputStream().use { input.copyTo(it) }
     }
 }
 
-// --- Helper function to download zip and unpack ---
-fun downloadAndUnzip(url: String, outputDir: File) {
-    val zipFile = File(buildDir, url.substringAfterLast("/"))
-    downloadFile(url, zipFile)
-    outputDir.mkdirs()
-    project.copy {
-        from(zipTree(zipFile))
-        into(outputDir)
+// --- HELPER: unzip ---
+fun unzip(zipFile: File, outputDir: File) {
+    ZipInputStream(zipFile.inputStream()).use { zip ->
+        generateSequence { zip.nextEntry }.forEach { entry ->
+            val outFile = File(outputDir, entry.name)
+            if (entry.isDirectory) outFile.mkdirs()
+            else {
+                outFile.parentFile.mkdirs()
+                outFile.outputStream().use { zip.copyTo(it) }
+            }
+        }
     }
 }
 
-// --- Custom Gradle task ---
-tasks.register("fetchTooling") {
+// --- FETCH LATEST RELEASE ASSETS ---
+fun fetchLatestReleaseAssets(repo: String): Map<String, String> {
+    val apiUrl = "https://api.github.com/repos/$repo/releases/latest"
+    val jsonText = URI(apiUrl).toURL().readText()
+    val json = JsonSlurper().parseText(jsonText) as Map<*, *>
+
+    // assets: a list of maps with "name" and "browser_download_url"
+    @Suppress("UNCHECKED_CAST")
+    val assets = json["assets"] as List<Map<*, *>>
+    return assets.associate { it["name"] as String to it["browser_download_url"] as String }
+}
+
+
+tasks.register("configureTooling") {
     group = "setup"
-    description = "Fetches Arduino CLI AAR/JAR and esptool for Chaquopy"
+    description = "Manually check and update ArduinoBuddy tooling."
+    notCompatibleWithConfigurationCache("Accesses network, files, etc.")
 
     doLast {
+        println("Checking ArduinoBuddy tooling…")
         libsDir.mkdirs()
         esptoolTargetDir.mkdirs()
+        buildTmpDir.mkdirs()
 
-        // 1️⃣ Arduino CLI artifacts
-        val arduinoCliAarUrl = "https://github.com/$arduinoCliRepo/releases/latest/download/arduinocli.aar"
-        val arduinoCliSourcesUrl = "https://github.com/$arduinoCliRepo/releases/latest/download/arduinocli-sources.jar"
+        val arduinoCliAssets = fetchLatestReleaseAssets(arduinoCliRepo)
+        val esptoolAssets = fetchLatestReleaseAssets(esptoolRepo)
 
-        downloadFile(arduinoCliAarUrl, File(libsDir, "arduinocli.aar"))
-        downloadFile(arduinoCliSourcesUrl, File(libsDir, "arduinocli-sources.jar"))
+        val currentHash = (arduinoCliAssets.keys + esptoolAssets.keys).sorted().joinToString()
+        val lastHash = if (hashFile.exists()) hashFile.readText() else ""
 
-        // 2️⃣ esptool Python bundle
-        val esptoolZipUrl = "https://github.com/$esptoolRepo/releases/download/$esptoolVersion/esptool-stripped.zip"
-        downloadAndUnzip(esptoolZipUrl, esptoolTargetDir)
+        if (currentHash != lastHash) {
+            println("Tooling changed or first run → downloading…")
 
-        println("Tooling fetched successfully.")
+            // Arduino CLI artifacts
+            arduinoCliAssets.forEach { (name, url) ->
+                if (name.contains("arduinocli")) {
+                    downloadFile(url, File(libsDir, name))
+                }
+            }
+
+            // esptool Python bundle (pick zip)
+            val zipEntry = esptoolAssets.entries.find { it.key.endsWith(".zip") }
+            if (zipEntry != null) {
+                val zipFile = File(buildTmpDir, zipEntry.key)
+                downloadFile(zipEntry.value, zipFile)
+                unzip(zipFile, esptoolTargetDir)
+            }
+
+            // store new hash
+            hashFile.writeText(currentHash)
+            println("Tooling downloaded and hash updated.")
+        } else {
+            println("Tooling up-to-date, skipping download.")
+        }
     }
-}
-
-// --- Ensure tooling is fetched before any build ---
-tasks.named("preBuild") {
-    dependsOn("fetchTooling")
 }
