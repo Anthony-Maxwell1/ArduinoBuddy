@@ -1,5 +1,5 @@
 # ArduinoBuddy
-## Code Arduino on your phone.
+## Code (almost, almoooost) any arduino on android.
 **[WIP]**
 Related repository:
 - [Arduino CLI fork](https://github.com/Anthony-Maxwell1/arduino-cli_arduinobuddyfork), ported to run on android with this application providing a native interface.
