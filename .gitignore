@@ -16,3 +16,4 @@ local.properties
 app/libs/*.aar
 app/libs/*-sources.jar
 app/src/main/python/esptool
+github.properties
