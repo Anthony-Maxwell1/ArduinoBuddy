@@ -1,5 +1,6 @@
 package org.thatdev.arduinobuddy
 
+import android.R
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -11,6 +12,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -25,19 +27,50 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        // Initialize JNI
-        Arduinobuddycli.touch()
-
-        // Initialize Arduinobuddycli
-        val dataDir = filesDir.absolutePath
-        Arduinobuddycli.init(dataDir)
+//        // Initialize JNI
+//        Arduinobuddycli.touch()
+//
+//        // Initialize Arduinobuddycli
+//        val dataDir = filesDir.absolutePath
+//        Arduinobuddycli.init(dataDir)
 
         setContent {
             ArduinoBuddyTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    BoardListScreen(modifier = Modifier.padding(innerPadding))
+//                    BoardListScreen(modifier = Modifier.padding(innerPadding))
+                    MainScreen(modifier = Modifier.padding(innerPadding))
                 }
             }
+        }
+    }
+}
+
+fun compile(code: String) {
+    
+}
+
+@Composable
+fun MainScreen(modifier: Modifier = Modifier) {
+    var code by remember { mutableStateOf("") }
+    Column {
+        Text(
+            text = "Main Screen",
+            modifier = modifier
+        )
+
+        TextField(
+            value = code,
+            onValueChange = { code = it },
+            modifier = modifier,
+            singleLine = false,
+            minLines = 3,
+            maxLines = 10
+        )
+
+        Button(onClick = {
+            compile(code)
+        }) {
+            Text("Compile")
         }
     }
 }
